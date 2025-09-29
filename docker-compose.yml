@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: bookstore-back
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "-", "http://localhost:8080/api/authors"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    environment:
+      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
+
+  web:
+    build:
+      context: .              
+      dockerfile: Dockerfile   
+    container_name: bookstore-web
+    environment:
+      NEXT_PUBLIC_API_BASE: http://backend:8080
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
